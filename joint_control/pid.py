@@ -52,23 +52,26 @@ class PIDController(object):
         @param sensor: current values from sensor
         @return control signal
         '''
-        self.e3 = target - sensor
-        print("Error = %f", e3)
 
-        P_Regler = self.Kp * (e3 - self.e2) #Gegenwart
+        #model prediciton
+        #angle(t) = angle(t-1) + speed * dt
+        y_predict = sensor + self.u * self.dt
+        self.y.append(y_predict)
+
+        e3 = target - ( sensor - self.y.popleft + y_predict)
+
+        #controller
+        P_Regler = self.Kp * (self.e3 - self.e2) #Gegenwart
         I_Regler = self.Ki * self.dt * self.e3 #Zukunft
-        D_Regler = self.Kd / self.dt * (self.e3 + 2 * self.e2 + self.e1) #Vergangenheit
+        D_Regler = self.Kd / self.dt * (self.e3 + 2 * self.e2 + self.e1) #Vergang.h.
 
-        self.y.append(sensor)
-        #angle(t) = angle(t-1) + speed * self.dt
-
+        #difference-storing
         self.e1 = self.e2
         self.e2 = self.e3
 
         self.u = self.u + P_Regler + I_Regler + D_Regler
 
-        return self.u
-
+        return self.u # u = speed
 
 class PIDAgent(SparkAgent):
     def __init__(self, simspark_ip='localhost',
@@ -91,7 +94,7 @@ class PIDAgent(SparkAgent):
             [perception.joint[joint_id]  for joint_id in JOINT_CMD_NAMES])
         target_angles = np.asarray([self.target_joints.get(joint_id,
             perception.joint[joint_id]) for joint_id in JOINT_CMD_NAMES])
-        u = self.joint_controller.(target_angles, joint_angles)
+        u = self.joint_controller.control(target_angles, joint_angles)
         action.speed = dict(zip(JOINT_CMD_NAMES.iterkeys(), u))  # dict: joint_id -> speed
         return action
 
