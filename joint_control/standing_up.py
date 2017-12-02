@@ -7,7 +7,7 @@
 
 
 from recognize_posture import PostureRecognitionAgent
-from keyframes import rightBackToStand, rightBellyToStand, wipe_forehead, hello
+from keyframes import *
 from os import listdir
 
 class StandingUpAgent(PostureRecognitionAgent):
@@ -17,13 +17,37 @@ class StandingUpAgent(PostureRecognitionAgent):
 
     def standing_up(self):
         posture = self.posture
-        # YOUR CODE HERE
+        # YOUR CODE
+        names = list()
+        times = list()
+        keys = list()
+        do_nothing = (names, times, keys)
+
         if posture == 'Back':
-            self.keyframes = leftBackToStand()
+            self.set_keyframes(leftBackToStand(), "Back")
         elif posture == 'Belly':
-            self.keyframes = leftBellyToStand()
-        else
-            self.keyframes = hello()
+            self.set_keyframes(leftBellyToStand(), "Belly" )
+        elif posture == 'Crouch':
+            self.set_keyframes(do_nothing, "nothing")
+        elif posture == 'Frog':
+            self.set_keyframes(do_nothing, "nothing")
+        elif posture == 'HeadBack':
+            self.set_keyframes(do_nothing, "nothing")
+        elif posture == 'Knee':
+            self.set_keyframes(do_nothing, "nothing")
+        elif posture == 'Left':
+            self.set_keyframes(leftBackToStand(), "left Back to Stand")
+        elif posture == 'Right':
+            self.set_keyframes(rightBackToStand(), "right Back to Stand")
+        elif posture == 'Sit':
+            self.set_keyframes(do_nothing(), "nothing")
+        elif posture == 'Stand':
+            self.set_keyframes(wipe_forehead(0), "wipe Forehead")
+        elif posture == 'Standinit':
+            self.set_keyframes(do_nothing, "nothing")
+        else:
+            self.set_keyframes(do_nothing, "nothing")
+
 
 class TestStandingUpAgent(StandingUpAgent):
     '''this agent turns off all motor to falls down in fixed cycles
