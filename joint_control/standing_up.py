@@ -40,7 +40,7 @@ class StandingUpAgent(PostureRecognitionAgent):
         elif posture == 'Right':
             self.set_keyframes(rightBackToStand(), "right Back to Stand")
         elif posture == 'Sit':
-            self.set_keyframes(do_nothing(), "nothing")
+            self.set_keyframes(do_nothing, "nothing")
         elif posture == 'Stand':
             self.set_keyframes(wipe_forehead(0), "wipe Forehead")
         elif posture == 'Standinit':
@@ -76,5 +76,6 @@ class TestStandingUpAgent(StandingUpAgent):
 
 
 if __name__ == '__main__':
-    agent = TestStandingUpAgent()
+    #agent = TestStandingUpAgent()
+    agent = StandingUpAgent()
     agent.run()

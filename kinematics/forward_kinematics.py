@@ -21,9 +21,8 @@ import sys
 sys.path.append(os.path.join(os.path.abspath(os.path.dirname(__file__)), '..', 'joint_control'))
 
 from numpy.matlib import matrix, identity
-
 from angle_interpolation import AngleInterpolationAgent
-
+from math import cos, sin
 
 class ForwardKinematicsAgent(AngleInterpolationAgent):
     def __init__(self, simspark_ip='localhost',
@@ -35,9 +34,43 @@ class ForwardKinematicsAgent(AngleInterpolationAgent):
         self.transforms = {n: identity(4) for n in self.joint_names}
 
         # chains defines the name of chain and joints of the chain
-        self.chains = {'Head': ['HeadYaw', 'HeadPitch']
+        self.chains = {'Head': ['HeadYaw', 'HeadPitch'],
                        # YOUR CODE HERE
+                       'LArm': ['LShoulderPitch', 'LShoulderRoll', 'LElbowYaw', 'LElbowRoll'],
+                       'LLeg': ['LHipYawPitch', 'LHipRoll', 'LHipPitch', 'LKneePitch', 'LAnklePitch', 'LAnkleRoll'],
+                       'RLeg': ['RHipYawPitch', 'RHipRoll', 'RHipPitch', 'RKneePitch', 'RAnklePitch', 'RAnkleRoll'],
+                       'RRArm': ['RShoulderPitch', 'RShoulderRoll', 'RElbowYaw', 'RElbowRoll']
                        }
+
+        self.joint_offsets = {  "HeadYaw":          [.0, .0, 126.50],   #from Torso
+                                "HeadPitch":        [.0, .0, .0],       #from HeadYaw
+                                #Left Shoulder
+                                "LShoulderPitch"    [.0, 98.0, 100.0],  #from Torso
+                                "LShoulderRoll":    [.0, .0, .0],       #from LShoulderPitch
+                                "LElbowYaw":        [105.0, 15.0, 0.0], #from LShoulderRoll
+                                "LElbowRoll":       [.0, .0, .0],       #from LElbowYaw
+                                "LWristYaw":        [55.95, .0, .0],    #from LElbowRoll
+                                #Left Leg
+                                "LHipYawPitch":     [.0, 50.0, -85.0],  #from Torso
+                                "LHipRoll":         [.0, .0, .0],       #from LHipYawPitch
+                                "LHipPitch":        [.0, .0, .0],       #from LHipRoll
+                                "LKneePitch":       [.0, .0, -100.0],   #from LHipPitch
+                                "LAnklePitch":      [.0, .0, -102.9],   #from LKneePitch
+                                "LAnkleRoll":       [.0, .0, .0],       #from LAnklePitch
+                                #Right Shoulder
+                                "RShoulderPitch":   [.0, 98.0, 100.0],  #from Torso
+                                "RShoulderRoll":    [.0, .0, .0],       #from RShoulderPitch
+                                "RElbowYaw":        [105.0, 15.0, 0.0], #from RShoulderRoll
+                                "RElbowRoll":       [.0, .0, .0],       #from RElbowYaw
+                                "RWristYaw":        [55.95, .0, .0],    #from RElbowRoll
+                                #Right Leg
+                                "RHipYawPitch":     [.0, 50.0, -85.0],  #from Torso
+                                "RHipRoll":         [.0, .0, .0],       #from RHipYawPitch
+                                "RHipPitch":        [.0, .0, .0],       #from RHipRoll
+                                "RKneePitch":       [.0, .0, -100.0],   #from RHipPitch
+                                "RAnklePitch":      [.0, .0, -102.9],   #from RKneePitch
+                                "RAnkleRoll":       [.0, .0, .0],       #from RAnklePitch
+                                }
 
     def think(self, perception):
         self.forward_kinematics(perception.joint)
@@ -52,7 +85,21 @@ class ForwardKinematicsAgent(AngleInterpolationAgent):
         :rtype: 4x4 matrix
         '''
         T = identity(4)
+        c = cos(joint_angle)
+        s = sin(joint_angle)
+
         # YOUR CODE HERE
+        if(joint_name.find('Roll')>0): #arround x-Axis
+            Rx=matrix([ [1, 0, 0, 0], [0, c, -s, 0], [0, s, c, 0], [0, 0, 0,1]])
+            print "Fuer Gelenk %s gilt Matix Rx:\n %s"%(joint_name, str(Rx))
+        elif(joint_name.find('Pitch')>0): #arround y-Axis
+            Ry=matrix([ [c, 0, s], [0, 1, 0], [-s, 0, c]])
+            print "Fuer Gelenk %s gilt Matix Ry:\n %s"%(joint_name, str(Ry))
+        elif(joint_name.find('Yaw')>0): #arround z-
+            Rz=matrix([ [c, s, 0], [-s, c, 0], [0, 0, 1]])
+            print "Fuer Gelenk %s gilt Matix Rz:\n %s"%(joint_name, str(Rz))
+        else:
+            print "WARNING: In Kinematics.local_trans() found neighter 'Pitch', 'Roll' nor 'Yaw' in joint_name"
 
         return T
 
@@ -66,8 +113,7 @@ class ForwardKinematicsAgent(AngleInterpolationAgent):
             for joint in chain_joints:
                 angle = joints[joint]
                 Tl = self.local_trans(joint, angle)
-                # YOUR CODE HERE
-
+                # YOUR CODE HEREi
                 self.transforms[joint] = T
 
 if __name__ == '__main__':
