@@ -43,9 +43,9 @@ class ForwardKinematicsAgent(AngleInterpolationAgent):
                        }
 
         self.joint_offsets = {  "HeadYaw":          [.0, .0, 126.50],   #from Torso
-                                "HeadPitch":        [.0, .0, .0],       #from HeadYaw
+                                "HeadPitch":        [.0, .0, .0],       #from
                                 #Left Shoulder
-                                "LShoulderPitch"    [.0, 98.0, 100.0],  #from Torso
+                                "LShoulderPitch":   [.0, 98.0, 100.0],  #from Torso
                                 "LShoulderRoll":    [.0, .0, .0],       #from LShoulderPitch
                                 "LElbowYaw":        [105.0, 15.0, 0.0], #from LShoulderRoll
                                 "LElbowRoll":       [.0, .0, .0],       #from LElbowYaw
@@ -87,20 +87,29 @@ class ForwardKinematicsAgent(AngleInterpolationAgent):
         T = identity(4)
         c = cos(joint_angle)
         s = sin(joint_angle)
-
+        x_offset, y_offset, z_offset = self.joint_offsets[joint_name]
+        last_row = [x_offset, y_offset, z_offset, 1.0]
         # YOUR CODE HERE
-        if(joint_name.find('Roll')>0): #arround x-Axis
-            Rx=matrix([ [1, 0, 0, 0], [0, c, -s, 0], [0, s, c, 0], [0, 0, 0,1]])
-            print "Fuer Gelenk %s gilt Matix Rx:\n %s"%(joint_name, str(Rx))
-        elif(joint_name.find('Pitch')>0): #arround y-Axis
-            Ry=matrix([ [c, 0, s], [0, 1, 0], [-s, 0, c]])
-            print "Fuer Gelenk %s gilt Matix Ry:\n %s"%(joint_name, str(Ry))
-        elif(joint_name.find('Yaw')>0): #arround z-
-            Rz=matrix([ [c, s, 0], [-s, c, 0], [0, 0, 1]])
-            print "Fuer Gelenk %s gilt Matix Rz:\n %s"%(joint_name, str(Rz))
+        if(joint_name.find('Roll')>0): #arround x-Axis -> Rx
+            T=matrix([  [1.0, 0.0,  0.0, 0.0],
+                        [0.0, c  , -s  , 0.0],
+                        [0.0, s  ,  c  , 0.0],
+                             last_row])
+            print "Rotate joint %s about x-axis (Roll)"%(joint_name)
+        elif(joint_name.find('Pitch')>0): #arround y-Axis -> Ry
+            T=matrix([  [ c  , 0.0, s  , 0.0],
+                        [ 0.0, 1.0, 0.0, 0.0],
+                        [-s  , 0.0, c  , 0.0],
+                            last_row         ])
+            print "Rotate joint %s about y-axis (Roll)"%(joint_name)
+        elif(joint_name.find('Yaw')>0): #arround z -> Rz
+            T=matrix([  [ c  , s  , 0.0, 0.0],
+                        [-s  , c  , 0.0, 0.0],
+                        [ 0.0, 0.0, 1.0, 0.0],
+                            last_row         ])
+            print "Rotate joint %s about z-axis (Roll)"%(joint_name)
         else:
             print "WARNING: In Kinematics.local_trans() found neighter 'Pitch', 'Roll' nor 'Yaw' in joint_name"
-
         return T
 
     def forward_kinematics(self, joints):
@@ -113,7 +122,8 @@ class ForwardKinematicsAgent(AngleInterpolationAgent):
             for joint in chain_joints:
                 angle = joints[joint]
                 Tl = self.local_trans(joint, angle)
-                # YOUR CODE HEREi
+                T = matrix.dot(T, Tl)
+                #print "Transform T=%"%str(T)
                 self.transforms[joint] = T
 
 if __name__ == '__main__':
