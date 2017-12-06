@@ -58,9 +58,9 @@ class ForwardKinematicsAgent(AngleInterpolationAgent):
                                 "LAnklePitch":      [.0, .0, -102.9],   #from LKneePitch
                                 "LAnkleRoll":       [.0, .0, .0],       #from LAnklePitch
                                 #Right Shoulder
-                                "RShoulderPitch":   [.0, 98.0, 100.0],  #from Torso
+                                "RShoulderPitch":   [.0, -98.0, 100.0],  #from Torso
                                 "RShoulderRoll":    [.0, .0, .0],       #from RShoulderPitch
-                                "RElbowYaw":        [105.0, 15.0, 0.0], #from RShoulderRoll
+                                "RElbowYaw":        [105.0, -15.0, 0.0], #from RShoulderRoll
                                 "RElbowRoll":       [.0, .0, .0],       #from RElbowYaw
                                 "RWristYaw":        [55.95, .0, .0],    #from RElbowRoll
                                 #Right Leg
@@ -90,6 +90,15 @@ class ForwardKinematicsAgent(AngleInterpolationAgent):
         x_offset, y_offset, z_offset = self.joint_offsets[joint_name]
         last_row = [x_offset, y_offset, z_offset, 1.0]
         # YOUR CODE HERE
+        if(joint_name == "LShoulderRoll"):
+            joint_name = "LShoulderYaw"
+        if(joint_name == "RShoulderRoll"):
+            joint_name = "RShoulderYaw"
+        if(joint_name == "LElbowYaw"):
+            joint_name = "LElbowRoll"
+        if(joint_name == "LElbowRoll"):
+            joint_name = "LElbowYaw"
+
         if(joint_name.find('Roll')>0): #arround x-Axis -> Rx
             T=matrix([  [1.0, 0.0,  0.0, 0.0],
                         [0.0, c  , -s  , 0.0],
@@ -122,7 +131,9 @@ class ForwardKinematicsAgent(AngleInterpolationAgent):
             for joint in chain_joints:
                 angle = joints[joint]
                 Tl = self.local_trans(joint, angle)
-                T = matrix.dot(T, Tl)
+
+                #TODO mit letzter Matrix multiplizieren
+                #TODO Winkel multiplizieren
                 #print "Transform T=%"%str(T)
                 self.transforms[joint] = T
 

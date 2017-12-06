@@ -130,6 +130,6 @@ class AngleInterpolationAgent(PIDAgent):
         return np.polyval(coeff_a, i)
 if __name__ == '__main__':
     agent = AngleInterpolationAgent()
-    agent.set_keyframes(leftBackToStand())  # CHANGE DIFFERENT KEYFRAMES
+    agent.set_keyframes(leftBackToStand(), "leftBackToStand")  # CHANGE DIFFERENT KEYFRAMES
     #agent.keyframes = leftBackToStand()
     agent.run()
