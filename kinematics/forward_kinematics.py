@@ -36,10 +36,10 @@ class ForwardKinematicsAgent(AngleInterpolationAgent):
         # chains defines the name of chain and joints of the chain
         self.chains = {'Head': ['HeadYaw', 'HeadPitch'],
                        # YOUR CODE HERE
-                       'LArm': ['LShoulderPitch', 'LShoulderRoll', 'LElbowYaw', 'LElbowRoll'],
+                       'LArm': ['LShoulderPitch', 'LShoulderRoll', 'LElbowYaw', 'LElbowRoll', 'LWristYaw'],
                        'LLeg': ['LHipYawPitch', 'LHipRoll', 'LHipPitch', 'LKneePitch', 'LAnklePitch', 'LAnkleRoll'],
                        'RLeg': ['RHipYawPitch', 'RHipRoll', 'RHipPitch', 'RKneePitch', 'RAnklePitch', 'RAnkleRoll'],
-                       'RRArm': ['RShoulderPitch', 'RShoulderRoll', 'RElbowYaw', 'RElbowRoll']
+                       'RArm': ['RShoulderPitch', 'RShoulderRoll', 'RElbowYaw', 'RElbowRoll', 'RWristYaw']
                        }
 
         self.joint_offsets = {  "HeadYaw":          [.0, .0, 126.50],   #from Torso
@@ -64,7 +64,7 @@ class ForwardKinematicsAgent(AngleInterpolationAgent):
                                 "RElbowRoll":       [.0, .0, .0],       #from RElbowYaw
                                 "RWristYaw":        [55.95, .0, .0],    #from RElbowRoll
                                 #Right Leg
-                                "RHipYawPitch":     [.0, 50.0, -85.0],  #from Torso
+                                "RHipYawPitch":     [.0, -50.0, -85.0],  #from Torso
                                 "RHipRoll":         [.0, .0, .0],       #from RHipYawPitch
                                 "RHipPitch":        [.0, .0, .0],       #from RHipRoll
                                 "RKneePitch":       [.0, .0, -100.0],   #from RHipPitch
@@ -100,23 +100,23 @@ class ForwardKinematicsAgent(AngleInterpolationAgent):
             joint_name = "LElbowYaw"
 
         if(joint_name.find('Roll')>0): #arround x-Axis -> Rx
-            T=matrix([  [1.0, 0.0,  0.0, 0.0],
-                        [0.0, c  , -s  , 0.0],
-                        [0.0, s  ,  c  , 0.0],
-                             last_row])
-            print "Rotate joint %s about x-axis (Roll)"%(joint_name)
+            T=matrix([  [1.0, 0.0,  0.0, x_offset],
+                        [0.0, c  , -s  , y_offset],
+                        [0.0, s  ,  c  , z_offset],
+                        [0.0, 0.0, 0.0 ,      1.0]])
+        #    print "Rotate joint %s about x-axis (Roll)"%(joint_name)
         elif(joint_name.find('Pitch')>0): #arround y-Axis -> Ry
-            T=matrix([  [ c  , 0.0, s  , 0.0],
-                        [ 0.0, 1.0, 0.0, 0.0],
-                        [-s  , 0.0, c  , 0.0],
-                            last_row         ])
-            print "Rotate joint %s about y-axis (Roll)"%(joint_name)
+            T=matrix([  [ c  , 0.0, s  , x_offset],
+                        [ 0.0, 1.0, 0.0, y_offset],
+                        [-s  , 0.0, c  , z_offset],
+                        [ 0.0, 0.0, 0.0,      1.0]])
+        #    print "Rotate joint %s about y-axis (Pitch)"%(joint_name)
         elif(joint_name.find('Yaw')>0): #arround z -> Rz
-            T=matrix([  [ c  , s  , 0.0, 0.0],
-                        [-s  , c  , 0.0, 0.0],
-                        [ 0.0, 0.0, 1.0, 0.0],
-                            last_row         ])
-            print "Rotate joint %s about z-axis (Roll)"%(joint_name)
+            T=matrix([  [ c  , -s  , 0.0, x_offset],
+                        [s  , c  , 0.0, y_offset],
+                        [ 0.0, 0.0, 1.0, z_offset],
+                        [ 0.0, 0.0, 0.0,      1.0]])
+        #    print "Rotate joint %s about z-axis (Yaw) for %s"%(joint_name, str(joint_angle))
         else:
             print "WARNING: In Kinematics.local_trans() found neighter 'Pitch', 'Roll' nor 'Yaw' in joint_name"
         return T
@@ -131,7 +131,7 @@ class ForwardKinematicsAgent(AngleInterpolationAgent):
             for joint in chain_joints:
                 angle = joints[joint]
                 Tl = self.local_trans(joint, angle)
-
+                T= T.dot(Tl)
                 #TODO mit letzter Matrix multiplizieren
                 #TODO Winkel multiplizieren
                 #print "Transform T=%"%str(T)
