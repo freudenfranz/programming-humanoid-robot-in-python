@@ -94,8 +94,8 @@ class AngleInterpolationAgent(PIDAgent):
                     self.interpolation_start_time = False
             if name in self.keyframe_book: #we have right handles
             #Interpolation!
-                #target_joints[name] = self.calc_bezier(t_now, self.t_left[name], self.t_right[name], name)
-                target_joints[name] = self.calc_linear(t_now, self.t_left[name], self.t_right[name])
+                target_joints[name] = self.calc_bezier(t_now, self.t_left[name], self.t_right[name], name)
+                #target_joints[name] = self.calc_linear(t_now, self.t_left[name], self.t_right[name])
         return target_joints
 
     def calc_linear(self, time_now, left, right):

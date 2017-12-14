@@ -36,10 +36,10 @@ class ForwardKinematicsAgent(AngleInterpolationAgent):
         # chains defines the name of chain and joints of the chain
         self.chains = {'Head': ['HeadYaw', 'HeadPitch'],
                        # YOUR CODE HERE
-                       'LArm': ['LShoulderPitch', 'LShoulderRoll', 'LElbowYaw', 'LElbowRoll', 'LWristYaw'],
+                       'LArm': ['LShoulderPitch', 'LShoulderRoll', 'LElbowYaw', 'LElbowRoll'],# 'LWristYaw'],
                        'LLeg': ['LHipYawPitch', 'LHipRoll', 'LHipPitch', 'LKneePitch', 'LAnklePitch', 'LAnkleRoll'],
                        'RLeg': ['RHipYawPitch', 'RHipRoll', 'RHipPitch', 'RKneePitch', 'RAnklePitch', 'RAnkleRoll'],
-                       'RArm': ['RShoulderPitch', 'RShoulderRoll', 'RElbowYaw', 'RElbowRoll', 'RWristYaw']
+                       'RArm': ['RShoulderPitch', 'RShoulderRoll', 'RElbowYaw', 'RElbowRoll'],#'RWristYaw']
                        }
 
         self.joint_offsets = {  "HeadYaw":          [.0, .0, 126.50],   #from Torso
@@ -104,16 +104,16 @@ class ForwardKinematicsAgent(AngleInterpolationAgent):
                         [0.0, c  , -s  , y_offset],
                         [0.0, s  ,  c  , z_offset],
                         [0.0, 0.0, 0.0 ,      1.0]])
-        #    print "Rotate joint %s about x-axis (Roll)"%(joint_name)
+            #print "Rotate joint %s about x-axis (Roll) for %s"%(joint_name,str(joint_angle))
         elif(joint_name.find('Pitch')>0): #arround y-Axis -> Ry
             T=matrix([  [ c  , 0.0, s  , x_offset],
                         [ 0.0, 1.0, 0.0, y_offset],
                         [-s  , 0.0, c  , z_offset],
                         [ 0.0, 0.0, 0.0,      1.0]])
-        #    print "Rotate joint %s about y-axis (Pitch)"%(joint_name)
+        #    print "Rotate joint %s about y-axis (Pitch) for %s"%(joint_name,str(joint_angle))
         elif(joint_name.find('Yaw')>0): #arround z -> Rz
-            T=matrix([  [ c  , -s  , 0.0, x_offset],
-                        [s  , c  , 0.0, y_offset],
+            T=matrix([  [  c , -s , 0.0, x_offset],
+                        [  s ,  c , 0.0, y_offset],
                         [ 0.0, 0.0, 1.0, z_offset],
                         [ 0.0, 0.0, 0.0,      1.0]])
         #    print "Rotate joint %s about z-axis (Yaw) for %s"%(joint_name, str(joint_angle))
@@ -132,8 +132,6 @@ class ForwardKinematicsAgent(AngleInterpolationAgent):
                 angle = joints[joint]
                 Tl = self.local_trans(joint, angle)
                 T= T.dot(Tl)
-                #TODO mit letzter Matrix multiplizieren
-                #TODO Winkel multiplizieren
                 #print "Transform T=%"%str(T)
                 self.transforms[joint] = T
 
