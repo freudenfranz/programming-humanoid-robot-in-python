@@ -40,9 +40,8 @@ class AngleInterpolationAgent(PIDAgent):
         self.t_right = {} # list of right sided keyframes of every segment/joint
         self.t_left = {} # list of loft sided keyframest of every segment/joint
 
-    def set_keyframes(self, keyframes, name):
+    def set_keyframes(self, keyframes):
         self.keyframes = keyframes
-        print "Setting Keyframes to %s"%name
         index = 0
         for name in keyframes[0]: #take first time and key of every joint out
             t1 = self.keyframes[1][index][0]
@@ -130,6 +129,6 @@ class AngleInterpolationAgent(PIDAgent):
         return np.polyval(coeff_a, i)
 if __name__ == '__main__':
     agent = AngleInterpolationAgent()
-    agent.set_keyframes(leftBackToStand(), "leftBackToStand")  # CHANGE DIFFERENT KEYFRAMES
+    agent.set_keyframes(leftBackToStand())  # CHANGE DIFFERENT KEYFRAMES
     #agent.keyframes = leftBackToStand()
     agent.run()
