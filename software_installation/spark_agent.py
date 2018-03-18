@@ -219,6 +219,10 @@ class SparkAgent(object):
         init_cmd = ('(init (unum ' + str(player_id) + ')(teamname ' + teamname + '))')
         self.send_command(init_cmd)
         self.thread = None
+        self.statuscount = 1
+        self.statusbar = ['[', '.', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ']']
+        self.dir = 'up'
+        self.agent_should_run = True
 
         while player_id == 0:
             self.sense()
@@ -261,9 +265,32 @@ class SparkAgent(object):
         action = self.think(perception)
         self.act(action)
 
+
     def run(self):
-        while True:
+        print "agent starts running.."
+
+        while self.agent_should_run:
+            #self.show_statusbar()
             self.sense_think_act()
+
+        print "agent stopped running.."
+
+    def show_statusbar(self ):
+        if self.dir == 'up' and self.statuscount < 10:
+            self.statuscount += 1
+            self.statusbar[self.statuscount] = '.'
+            self.statusbar[self.statuscount - 1] = ' '
+        elif self.dir == 'down' and self.statuscount > 1:
+            self.statuscount -= 1
+            self.statusbar[self.statuscount] = '.'
+            self.statusbar[self.statuscount+1] = ' '
+        elif self.statuscount >= 10:
+            self.dir = 'down'
+        elif self.statuscount <= 1:
+            self.dir = 'up'
+            print "\x1b[1A"
+            for n in self.statusbar:
+                print n,
 
     def start(self):
         if self.thread is None:

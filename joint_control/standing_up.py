@@ -24,29 +24,29 @@ class StandingUpAgent(PostureRecognitionAgent):
         do_nothing = (names, times, keys)
 
         if posture == 'Back':
-            self.set_keyframes(leftBackToStand(), "Back")
+            self.set_keyframes(leftBackToStand())
         elif posture == 'Belly':
-            self.set_keyframes(leftBellyToStand(), "Belly" )
+            self.set_keyframes(leftBellyToStand())
         elif posture == 'Crouch':
-            self.set_keyframes(do_nothing, "nothing")
+            self.set_keyframes(do_nothing)
         elif posture == 'Frog':
-            self.set_keyframes(do_nothing, "nothing")
+            self.set_keyframes(do_nothing)
         elif posture == 'HeadBack':
-            self.set_keyframes(do_nothing, "nothing")
+            self.set_keyframes(do_nothing)
         elif posture == 'Knee':
-            self.set_keyframes(do_nothing, "nothing")
+            self.set_keyframes(do_nothing)
         elif posture == 'Left':
-            self.set_keyframes(leftBackToStand(), "left Back to Stand")
+            self.set_keyframes(leftBackToStand())
         elif posture == 'Right':
-            self.set_keyframes(rightBackToStand(), "right Back to Stand")
+            self.set_keyframes(rightBackToStand())
         elif posture == 'Sit':
-            self.set_keyframes(do_nothing, "nothing")
+            self.set_keyframes(do_nothing)
         elif posture == 'Stand':
-            self.set_keyframes(wipe_forehead(0), "wipe Forehead")
+            self.set_keyframes(wipe_forehead(0))
         elif posture == 'Standinit':
-            self.set_keyframes(do_nothing, "nothing")
+            self.set_keyframes(do_nothing)
         else:
-            self.set_keyframes(do_nothing, "nothing")
+            self.set_keyframes(do_nothing)
 
 
 class TestStandingUpAgent(StandingUpAgent):
@@ -76,6 +76,6 @@ class TestStandingUpAgent(StandingUpAgent):
 
 
 if __name__ == '__main__':
-    #agent = TestStandingUpAgent()
+    agent = TestStandingUpAgent()
     agent = StandingUpAgent()
     agent.run()
