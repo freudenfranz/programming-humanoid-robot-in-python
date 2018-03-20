@@ -23,7 +23,7 @@ class Console(Cmd):
             sleep(2)
         if server_agent:
             self.server_agent=ServerAgent()
-            self.server_agent.start_server()
+            self.server_agent.start_server
             self.server_agent.start()
             sleep(2)
         if client_agent:
@@ -74,6 +74,54 @@ class Console(Cmd):
 
         return True
 
+    def do_start_serveragent(self, args):
+        '''Starts a server agent thread and connects this console over the client agent to it'''
+        try:
+
+            self.server_agent=ServerAgent()
+            self.server_agent.start_server()
+            self.server_agent.start()
+            sleep(2)
+        except Exception as ex:
+            template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print message
+        return False
+
+    def do_start_simspark(self, args):
+        '''Starts a simspark-simulator in a new window'''
+        try:
+            self.simspark=Popen(['simspark'], stdout=PIPE, stderr=PIPE)
+            sleep(2)
+        except Exception as ex:
+            template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+            message = template.format(type(ex).__name__, ex.args)
+            print message
+        return False
+
+    def do_list_server_abilities(self,args):
+            '''Lists all methods the server is providing.'''
+            self.agent.list_server_methods()
+            return False
+
+    def do_print_traceback(self, args):
+                '''Prints the traceback of the last Exception'''
+                traceback.print_exc()
+                return False
+
+    def do_set_verbosity(self, args):
+                    '''Sets the amount of information the server-tread is going to provide'''
+                    self.agent.set_verbosity_level(args[0])
+                    return False
+
+    def do_clear(self, args):
+        clear = "\n" * 100
+        jmp_back = "\r" * 100
+
+        print clear
+
+        return False
+
     #==========Commands start here===========#
     def do_set_transform(self, args):
         '''\n Sets the transformation matrix of a effector, which will lead to its moovement.\n\n'''\
@@ -122,7 +170,7 @@ class Console(Cmd):
             #if a joint is given, print transformation matrix of it'''
             else:
                 try:
-                    print self.agent.get_transform(args[0])
+                    self.agent.get_transform(args[0])
                 except KeyError:
                     print("Joint name not known!")
                     print self.do_get_transform.__doc__
@@ -260,21 +308,6 @@ class Console(Cmd):
         '''A joint-chain for an effector contains all joints for whome angles would have to'''\
         ''' be calculated if this effector would have to be mooved'''
         print self.agent.get_chains()
-        return False
-
-    def do_list_server_abilities(self,args):
-        '''Lists all methods the server is providing.'''
-        self.agent.list_server_methods()
-        return False
-
-    def do_print_traceback(self, args):
-        '''Prints the traceback of the last Exception'''
-        traceback.print_exc()
-        return False
-
-    def do_set_verbosity(self, args):
-        '''Sets the amount of information the server-tread is going to provide'''
-        self.agent.set_verbosity_level(args[0])
         return False
 
 if __name__ == '__main__':

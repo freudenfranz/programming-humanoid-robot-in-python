@@ -145,8 +145,9 @@ class Perception:
             elif name == ACCELEROMETER_PERCEPTOR:
                 self.acc = [float(v) for v in s[2][1:]]
             elif name == HINGE_JOINT_PERCEPTOR:
+                #s = z.B. ['HJ', ['n', 'llj1'], ['ax', '0.000]]
                 jointv = {}
-                for i in s[1:]:
+                for i in s[1:]: #['n', 'llj1'], ['ax', '0.000]
                     jointv[i[0]] = i[1]
                 name = JOINT_SENSOR_NAMES[jointv['n']]
                 if 'ax' in jointv:

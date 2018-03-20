@@ -17,6 +17,7 @@ import sys
 sys.path.append(os.path.join(os.path.abspath(os.path.dirname(__file__)), '..', 'kinematics'))
 from SimpleXMLRPCServer import SimpleXMLRPCServer
 from inverse_kinematics import InverseKinematicsAgent
+from math import pi
 from threading import Thread
 from keyframes import hello
 
@@ -65,12 +66,13 @@ class ServerAgent(InverseKinematicsAgent):
 
     def set_angle(self, joint_name, angle):
         '''set target angle of joint for PID controller
+            @angle in Grad
         '''
         # YOUR CODE HERE
         if self.verbosity_level > 3:
             print "trying to set %s to %s degrees"%(joint_name, angle)
         if joint_name in self.perception.joint:
-            self.perception.joint[joint_name] = angle
+            self.target_joints[joint_name] = float(angle) * pi / 180.0;
             if self.verbosity_level > 4:
                 print "%s is now at %s degrees"%(joint_name, self.perception.joint[joint_name])
         else:
@@ -98,7 +100,8 @@ class ServerAgent(InverseKinematicsAgent):
         '''get transform with given name
         '''
         # YOUR CODE HERE
-        return self.transforms[name]
+        print str(self.transforms[name])
+        return True
 
     def set_transform(self, effector_name, transform):
         '''solve the inverse kinematics and control joints use the'''
