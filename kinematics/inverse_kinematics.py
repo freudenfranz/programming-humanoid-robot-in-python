@@ -8,8 +8,6 @@
     2. use the results of inverse kinematics to control NAO's legs (in InverseKinematicsAgent.set_transforms)
        and test your inverse kinematics implementation.
 '''
-
-
 from forward_kinematics import ForwardKinematicsAgent
 from numpy.matlib import identity
 from numpy import matrix
@@ -55,30 +53,29 @@ class InverseKinematicsAgent(ForwardKinematicsAgent):
         '''
         verbose = True
 
-        self.bodypart_sizes= {  "Hip_offset_Z":     85.0,
+        self.bodypart_sizes= {
+        "Hip_offset_Z":     85.0,
         "Hip_offset_Y":     50.0,
         "Thigh_lenght":     100.0,#oberschenkel
         "Tibia_length":     102.9,#schienbein
         "Foot_height":      45.19}
 
         if(effector_name.find('Leg')>0):
+            trans_y = identity(4)
             if(effector_name =='LLeg'):
                 left = True
                 if verbose:
                     print 'Calculating inverse kinematics for left leg'
+                trans_y[3,1]=self.bodypart_sizes["Hip_offset_Y"]
             elif(effector_name == 'RLeg'):
                 left = False
                 if verbose:
                     print 'Calculating inverse kinematics for right leg'
+                trans_y[3,1]=-self.bodypart_sizes["Hip_offset_Y"]
             else:
                 print "WARNING effector was neighter RLeg nor LLeg"
 
             #TODO: was ist fuer links, was fuer rechts?? Winkel unten anpassen!!
-            trans_y = identity(4)
-            if left:
-                trans_y[3,1]=self.bodypart_sizes["Hip_offset_Y"]
-            else:
-                trans_y[3,1]=-self.bodypart_sizes["Hip_offset_Y"]
             if verbose:
                 print "trans_y = \n%s "%str(trans_y)
 
