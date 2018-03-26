@@ -14,6 +14,7 @@
 # add PYTHONPATH
 import os
 import sys
+import numpy as np
 sys.path.append(os.path.join(os.path.abspath(os.path.dirname(__file__)), '..', 'kinematics'))
 from SimpleXMLRPCServer import SimpleXMLRPCServer
 from inverse_kinematics import InverseKinematicsAgent
@@ -28,7 +29,7 @@ class ServerAgent(InverseKinematicsAgent):
     def __init__(self, addr='localhost', port=8000):
         super(InverseKinematicsAgent, self).__init__()
         print "start Server.."
-        self.server = SimpleXMLRPCServer((addr, port))
+        self.server = SimpleXMLRPCServer((addr, port), logRequests=False)
         print "server startet: %s"%repr(self.server)
         self.verbosity_level = 0
         self.server.register_function(self.get_angle)
@@ -100,7 +101,16 @@ class ServerAgent(InverseKinematicsAgent):
         '''get transform with given name
         '''
         # YOUR CODE HERE
-        print str(self.transforms[name])
+        trans = self.transforms[name]
+        original = np.get_printoptions()
+        np.set_printoptions(precision=2)
+        np.set_printoptions(suppress=True)
+        print str(trans)
+        np.set_printoptions(**original)
+        x = trans[0,3]
+        y = trans[1,3]
+        z = trans[2,3]
+        print "with x=%.2f, y=%.2f, z=%.2f"%(x,y,z)
         return True
 
     def set_transform(self, effector_name, transform):

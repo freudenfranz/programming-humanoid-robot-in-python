@@ -6,6 +6,7 @@ from agent_server import ServerAgent
 sys.path.append(os.path.join(os.path.abspath(os.path.dirname(__file__)), '..', 'joint_control'))
 from keyframes import *
 from numpy.matlib import matrix, identity
+from math import pi
 from time import sleep
 from threading import Thread
 from subprocess import Popen, PIPE
@@ -88,7 +89,7 @@ class Console(Cmd):
             print message
         return False
 
-    def do_start_simspark(self, args):
+    def do_simspark(self, args):
         '''Starts a simspark-simulator in a new window'''
         try:
             self.simspark=Popen(['simspark'], stdout=PIPE, stderr=PIPE)
@@ -170,13 +171,16 @@ class Console(Cmd):
             #if a joint is given, print transformation matrix of it'''
             else:
                 try:
+                    print("\n%s: "%args[0])
                     self.agent.get_transform(args[0])
                 except KeyError:
                     print("Joint name not known!")
                     print self.do_get_transform.__doc__
                 except:
                     print("It seems, that the function 'execute_keyframes' doesn't work properly")
-                    traceback.print_exc()
+                    print self.do_get_transform.__doc__
+                    print traceback.format_exc()
+                    #traceback.print_exc()
         else:
             print "Incomplete input!"
             print self.do_get_transform.__doc__
@@ -184,7 +188,7 @@ class Console(Cmd):
         return False
 
     def do_set_angle(self, args):
-        '''\n Sets the angle of a joint, which will lead to its moovement.\n\n'''\
+        '''\n Sets the angle of a joint given in degrees, which will lead to its moovement.\n\n'''\
         '''  Usage: set_angle <joint_name> <angle>\n'''\
         '''   If you don't use any parameters it will be uses 'HeadYaw' and '0.707'\n'''\
         '''  Possible joints are:\n'''\
@@ -232,7 +236,11 @@ class Console(Cmd):
                 for i in self.agent.joint_names:
                     self.do_get_angle(i)
             try:
-                print "%s:\n  %s degrees"%(args[0],self.agent.get_angle(args[0]))
+                angle =self.agent.get_angle(args[0])
+                if angle >= 0:
+                    print "%s: \t\t %s deg = \t %s rad"%(args[0], angle / pi * 180, angle)
+                else:
+                    print "%s: \t\t%s deg = \t%s rad"%(args[0], angle / pi * 180, angle)
             except:
                 print("get_angle function seems not to work properly")
         else:
@@ -326,7 +334,10 @@ if __name__ == '__main__':
           global name 'foot2hip' is not defined">
           --> alles muss noch  fertig gemacht werden.
     get_transform ueberpruefen sobald set_transform funktioniert
+    get_transform raised die falsche exeption..
+    get_angle all scheint eine fehlendes gelenk zu finden
     checken ob eingaben Richtig sind (joint.. names)
+    clr jmp_back funktioniert nicht
     forward_kinematics hint 3 torso machen.
     execute keyframes relaxe und right back to stand funktioniert noch nicht
     '''
