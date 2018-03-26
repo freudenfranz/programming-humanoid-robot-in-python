@@ -86,9 +86,9 @@ class ForwardKinematicsAgent(PostureRecognitionAgent):
         '''
         T = identity(4)
         c = cos(joint_angle)
+        #print "cos(%s)=%s"%(joint_angle, c)
         s = sin(joint_angle)
         x_offset, y_offset, z_offset = self.joint_offsets[joint_name]
-        last_row = [x_offset, y_offset, z_offset, 1.0]
         # YOUR CODE HERE
         if(joint_name == "LShoulderRoll"):
             joint_name = "LShoulderYaw"
