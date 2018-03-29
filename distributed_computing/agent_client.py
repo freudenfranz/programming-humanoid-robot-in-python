@@ -110,13 +110,14 @@ class ClientAgent(object):
         '''
         # YOUR CODE HERE
         self.server.get_transform(name)
-        
 
-    def set_transform(self, effector_name, transform):
+
+    def set_transform(self, effector_name, x, y, z):
         '''solve the inverse kinematics and control joints use the results
         '''
         # YOUR CODE HERE
-        self.server.set_transform(effector_name, transform)
+
+        self.server.set_transform(effector_name, x, y, z)
         #self.post.set_transform(effector_name, transform)
 
     def relaxe(self, stiffness):
@@ -128,6 +129,8 @@ class ClientAgent(object):
     def set_verbosity_level(self, level):
         self.server.set_verbosity(level)
 
+    def reload_agent(self):
+        self.server.reload_agent()
 
 if __name__ == '__main__':
     #agent = ClientAgent()

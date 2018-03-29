@@ -82,7 +82,8 @@ class Console(Cmd):
             self.server_agent=ServerAgent()
             self.server_agent.start_server()
             self.server_agent.start()
-            sleep(2)
+            print"Verbosity Level is set to %s"%self.agent.set_verbosity_level(args[0])
+            sleep(5)
         except Exception as ex:
             template = "An exception of type {0} occurred. Arguments:\n{1!r}"
             message = template.format(type(ex).__name__, ex.args)
@@ -101,19 +102,19 @@ class Console(Cmd):
         return False
 
     def do_list_server_abilities(self,args):
-            '''Lists all methods the server is providing.'''
-            self.agent.list_server_methods()
-            return False
+        '''Lists all methods the server is providing.'''
+        self.agent.list_server_methods()
+        return False
 
     def do_print_traceback(self, args):
-                '''Prints the traceback of the last Exception'''
-                traceback.print_exc()
-                return False
+        '''Prints the traceback of the last Exception'''
+        traceback.print_exc()
+        return False
 
     def do_set_verbosity(self, args):
-                    '''Sets the amount of information the server-tread is going to provide'''
-                    self.agent.set_verbosity_level(args[0])
-                    return False
+        '''Sets the amount of information the server-tread is going to provide'''
+        self.agent.set_verbosity_level(args[0])
+        return False
 
     def do_clear(self, args):
         clear = "\n" * 100
@@ -123,7 +124,15 @@ class Console(Cmd):
 
         return False
 
-    #==========Commands start here===========#
+    def do_reload_agent(self, args):
+        ''''to speed up the developement-loop with this
+        you can reload the agent while the simulation is still
+        running if you changed the code live'''
+        self.agent.reload_agent()
+        return False
+
+
+    #==========Real Nao commands start here===========#
     def do_set_transform(self, args):
         '''\n Sets the transformation matrix of a effector, which will lead to its moovement.\n\n'''\
         '''  Usage: set_transform <effector_name> <transformation_matrix>\n'''\
@@ -132,18 +141,27 @@ class Console(Cmd):
         '''  Possible effectors are:\n'''\
         '''   'Head' 'LArm' 'LLeg' 'RLeg' 'RArm' \n'''
         args = args.split()
-        if len(args)==0:
+        if len(args)==3:
             print "No arguments specified. Using standard values"
-            self.do_set_transform("LLeg [[1,0,0,0][0,1,0,0][0,0,1,0][0,0.05,0.26,0]]")
-        elif len(args)==2:
-            print "Nao will set %s to %s"%(args[0], args[1])
-            args[1] = matrix(args[1])
+            #self.do_set_transform("LLeg [[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0.05,0.26,0]]")
+            #self.do_set_transform("LLeg [[1,0,0,0],[0,1,0,10],[0,0,1,10],[0,0,0,1
             try:
-                self.agent.set_transform(args[0], args[1])
+                print "Nao will set %s to x=%s y=%s z=%s"%('LLeg', args[0], args[1], args[2])
+
+                self.agent.set_transform('LLeg', args[0], args[1], args[2])
             except:
-                print "<Exeption>"
-                print("Nao thinks that 'set_tranform' function does not work properly")
                 traceback.print_exc()
+            '''
+            elif len(args)==2:
+                args[1] = matrix(args[1])
+                print "Nao will set %s to %s"%(args[0], args[1])
+                try:
+                    self.agent.set_transform(args[0], args[1])
+                except:
+                    print "<Exeption>"
+                    print("Nao thinks that 'set_tranform' function does not work properly")
+                    traceback.print_exc()
+            '''
         else:
             print self.do_set_transform.__doc__
 
@@ -320,17 +338,18 @@ class Console(Cmd):
 
 if __name__ == '__main__':
     string = '''
-    #########################################################################
-    ## Oo_oO   Hi I'm Nao. Welcome my interpreter!                         ##
-    ## --|--   If you have questions, tell me to 'help' or just make a '?' ##
-    ## _| |_                                                               ##
-    #########################################################################
+    ##############################################################
+    ## Oo_oO   Hi I'm Nao. Welcome my interpreter!              ##
+    ## --|--   If you have questions,                           ##
+    ## _| |_   tell me to 'help' or just make a '?'             ##
+    ##############################################################
 
     TODO's:
     set_transform funktioniert noch nicht:
-          File "/usr/lib/python2.7/xmlrpclib.py", line 800, in close
-          raise Fault(**self._stack[0])
-          xmlrpclib.Fault: <Fault 1: "<type 'exceptions.NameError'>:
+          File "/usr/lib/python2.7/xmlrpclib.py", line 800,
+          in close raise Fault(**self._stack[0])
+          xmlrpclib.Fault: <Fault 1:
+          "<type 'exceptions.NameError'>:
           global name 'foot2hip' is not defined">
           --> alles muss noch  fertig gemacht werden.
     get_transform ueberpruefen sobald set_transform funktioniert
@@ -339,7 +358,12 @@ if __name__ == '__main__':
     checken ob eingaben Richtig sind (joint.. names)
     clr jmp_back funktioniert nicht
     forward_kinematics hint 3 torso machen.
-    execute keyframes relaxe und right back to stand funktioniert noch nicht
+    execute keyframes relaxe und right back to stand
+        funktioniert noch nicht
+    set_transform funkitoniert jetzt mit x,y,z sollte aber
+        ueber eine Matrix laufen..
+    set_verbosity die Zahl muss ueberprueft werden. bei leer stuerzt
+        es ab
     '''
 
     console = Console(False, False, True)

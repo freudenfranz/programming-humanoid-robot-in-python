@@ -15,6 +15,7 @@
 import os
 import sys
 import numpy as np
+from numpy import matrix, identity
 sys.path.append(os.path.join(os.path.abspath(os.path.dirname(__file__)), '..', 'kinematics'))
 from SimpleXMLRPCServer import SimpleXMLRPCServer
 from inverse_kinematics import InverseKinematicsAgent
@@ -31,7 +32,7 @@ class ServerAgent(InverseKinematicsAgent):
         print "start Server.."
         self.server = SimpleXMLRPCServer((addr, port), logRequests=False)
         print "server startet: %s"%repr(self.server)
-        self.verbosity_level = 0
+
         self.server.register_function(self.get_angle)
         self.server.register_function(self.set_angle)
         self.server.register_function(self.get_posture)
@@ -43,6 +44,7 @@ class ServerAgent(InverseKinematicsAgent):
         self.server.register_function(self.run)
         self.server.register_function(self.get_chains)
         self.server.register_function(self.set_verbosity)
+        self.server.register_function(self.reload_agent)
         self.server.register_introspection_functions()
 
 
@@ -113,14 +115,23 @@ class ServerAgent(InverseKinematicsAgent):
         print "with x=%.2f, y=%.2f, z=%.2f"%(x,y,z)
         return True
 
-    def set_transform(self, effector_name, transform):
-        '''solve the inverse kinematics and control joints use the'''
+    def set_transform(self, effector_name, x, y, z):
+        '''solve the inverse kinematics and control joints use the result'''
         # YOUR CODE HERE
+        transform = identity(4)
+        transform[0,3]= x
+        transform[1,3]= y
+        transform[2,3]= z
+        '''transform = matrix([[   1.,      0.,     -0.,    100.02],
+                     [   0.,      1.,      0.,     50.  ],
+                     [   0.,     -0.,      1.,   -187.89],
+                     [   0.,      0.,      0.,      1.  ]])'''
+
         if self.verbosity_level > 3:
-            print "trying to set %s to %s"%(effector_name,transform)
+            print "transformation_matrix of %s is \n%s"%(effector_name, transform)
         self.set_transforms(effector_name, transform)
-        if self.verbosity_level > 4:
-            print "transformation matrix of %s is now %s"%(effector_name, self.get_transform(effector_name,transform))
+        #if self.verbosity_level > 4:
+            #TODO print "transformation matrix of %s is now %s"%(effector_name, self.get_transform(effector_name))
         return True
 
     def get_chains(self):
@@ -134,6 +145,14 @@ class ServerAgent(InverseKinematicsAgent):
         self.verbosity_level = level
         if self.verbosity_level > 1:
             print "verbosity level set to %s"%self.verbosity_level
+        return True
+
+    def reload_agent(self):
+        '''to speed up the developement-loop with this
+        you can reload the agent while the simulation is still
+        running if you changed the code live'''
+        print "TODO: has to stop the server and start a new instance because you cannot reload instances"
+        #reload(inverse_kinematics)
         return True
 
 if __name__ == '__main__':

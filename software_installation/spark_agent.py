@@ -214,6 +214,7 @@ class SparkAgent(object):
         self.sync_mode = sync_mode
         self.connect(simspark_ip, simspark_port)
         self.perception = Perception()
+        self.verbosity_level = 5
 
         self.send_command('(scene rsg/agent/naov4/nao.rsg)')
         self.sense()  # only need to get msg from simspark
