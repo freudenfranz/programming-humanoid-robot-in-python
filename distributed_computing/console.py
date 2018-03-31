@@ -82,7 +82,7 @@ class Console(Cmd):
             self.server_agent=ServerAgent()
             self.server_agent.start_server()
             self.server_agent.start()
-            print"Verbosity Level is set to %s"%self.agent.set_verbosity_level(args[0])
+            self.agent.get_verbosity_level()
             sleep(5)
         except Exception as ex:
             template = "An exception of type {0} occurred. Arguments:\n{1!r}"
@@ -112,8 +112,13 @@ class Console(Cmd):
         return False
 
     def do_set_verbosity(self, args):
-        '''Sets the amount of information the server-tread is going to provide'''
+        '''Sets verbosity level, wich effects the amount of information outputted by the server'''
         self.agent.set_verbosity_level(args[0])
+        return False
+
+    def do_get_verbosity(self, args):
+        '''Prints the actual verbosity_level'''
+        self.agent.get_verbosity_level()
         return False
 
     def do_clear(self, args):
@@ -141,27 +146,30 @@ class Console(Cmd):
         '''  Possible effectors are:\n'''\
         '''   'Head' 'LArm' 'LLeg' 'RLeg' 'RArm' \n'''
         args = args.split()
-        if len(args)==3:
+        if len(args)==0:
             print "No arguments specified. Using standard values"
+            print "LLeg [[1,0,0,0],[0,1,0,50],[0,0,1,-287.9],[0,0,0,1]]"
             #self.do_set_transform("LLeg [[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0.05,0.26,0]]")
-            #self.do_set_transform("LLeg [[1,0,0,0],[0,1,0,10],[0,0,1,10],[0,0,0,1
+            #self.do_set_transform("LLeg [[1,0,0,0],[0,1,0,50],[0,0,1,-287.9],[0,0,0,1]])
             try:
-                print "Nao will set %s to x=%s y=%s z=%s"%('LLeg', args[0], args[1], args[2])
+                #print "Nao will set %s to x=%s y=%s z=%s"%('LLeg', args[0], args[1], args[2])
 
-                self.agent.set_transform('LLeg', args[0], args[1], args[2])
+                self.agent.set_transform('LLeg', 0, 50, -287.9)
             except:
                 traceback.print_exc()
-            '''
-            elif len(args)==2:
-                args[1] = matrix(args[1])
-                print "Nao will set %s to %s"%(args[0], args[1])
-                try:
-                    self.agent.set_transform(args[0], args[1])
-                except:
-                    print "<Exeption>"
-                    print("Nao thinks that 'set_tranform' function does not work properly")
-                    traceback.print_exc()
-            '''
+
+        elif len(args)==3:
+            dx=float(args[0])
+            dy=float(args[1])
+            dz=float(args[2])
+            print "\tValues of translation-vercotr are x=%.2f, y=%.2f, z=%.2f"%(dx, dy,dz)
+            try:
+                self.agent.set_transform('LLeg',dx,dy,dz)
+            except:
+                print "<Exeption>"
+                print("Nao thinks that 'set_tranform' function does not work properly")
+                traceback.print_exc()
+
         else:
             print self.do_set_transform.__doc__
 
@@ -237,8 +245,10 @@ class Console(Cmd):
         return False
 
     def do_get_angle(self, args):
-        '''\n Returns the actual angle of a joint\n\n'''\
-        '''  Usage: get_angle <joint_name> \n\n'''\
+        '''\n Returns the actual angle of a joint or a joint-chain\n\n'''\
+        '''  Usage: get_angle <[joint_name, chain-name, all]> \n\n'''\
+        '''  Possible chain are:\n'''\
+        '''   "Head" "LArm" "LLeg" "RLeg" "RArm" \n'''\
         '''  Possible joints are:\n'''\
         '''   "HeadYaw" "HeadPitch" \n'''\
         '''   "LShoulderPitch" "LShoulderRoll" "RShoulderPitch" "RShoulderRoll"\n'''\
@@ -247,18 +257,46 @@ class Console(Cmd):
         '''   "LHipYawPitch" "LHipPitch" "LHipRoll" "RHipRoll" "RHipPitch" "RHipYawPitch"\n'''\
         '''   "LKneePitch" "RKneePitch"\n'''\
         '''   "LAnklePitch" "LAnkleRoll" "RAnklePitch" "RAnkleRoll" \n'''
-        '''   "all for all" '''
+        '''   "all for all joints" '''
         args = args.split()
         if len(args) == 1:
-            if args[0] == 'all':
-                for i in self.agent.joint_names:
-                    self.do_get_angle(i)
             try:
-                angle =self.agent.get_angle(args[0])
-                if angle >= 0:
-                    print "%s: \t\t %s deg = \t %s rad"%(args[0], angle / pi * 180, angle)
+                if args[0] == 'all':
+                    for i in self.agent.joint_names:
+                        self.do_get_angle(i)
+                elif args[0] == 'Head':
+                    self.do_get_angle("HeadYaw")
+                    self.do_get_angle("HeadPitch")
+                elif args[0] == 'LArm':
+                    self.do_get_angle("LShoulderPitch")
+                    self.do_get_angle("LShoulderRoll")
+                    self.do_get_angle("LElbowYaw")
+                    self.do_get_angle("LElbowRoll")
+                    #self.do_get_angle("LWristYaw")
+                elif args[0] == 'LLeg':
+                    self.do_get_angle("LHipYawPitch")
+                    self.do_get_angle("LHipPitch")
+                    self.do_get_angle("LHipRoll")
+                    self.do_get_angle("LKneePitch")
+                    self.do_get_angle("LAnklePitch")
+                    self.do_get_angle("LAnkleRoll")
+                elif args[0] == 'RArm':
+                    self.do_get_angle("RShoulderPitch")
+                    self.do_get_angle("RShoulderRoll")
+                    self.do_get_angle("RElbowYaw")
+                    self.do_get_angle("RElbowRoll")
+                    #self.do_get_angle("RWristYaw")
+                elif args[0] == 'RLeg':
+                    self.do_get_angle("LHipYawPitch")
+                    self.do_get_angle("LHipPitch")
+                    self.do_get_angle("LHipRoll")
+                    self.do_get_angle("LKneePitch")
+                    self.do_get_angle("LAnklePitch")
+                    self.do_get_angle("LAnkleRoll")
                 else:
-                    print "%s: \t\t%s deg = \t%s rad"%(args[0], angle / pi * 180, angle)
+                    angle =self.agent.get_angle(args[0])
+                    print "%s:\t\t %.3fdeg =%.2frad"%(args[0], angle / pi * 180, angle)
+
             except:
                 print("get_angle function seems not to work properly")
         else:
@@ -364,6 +402,7 @@ if __name__ == '__main__':
         ueber eine Matrix laufen..
     set_verbosity die Zahl muss ueberprueft werden. bei leer stuerzt
         es ab
+    -implement to start multiple server_agents
     '''
 
     console = Console(False, False, True)
