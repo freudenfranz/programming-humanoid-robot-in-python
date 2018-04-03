@@ -1,5 +1,4 @@
 '''In this exercise you need to implement inverse kinematics for NAO's legs
-
 * Tasks:
     1. solve inverse kinematics for NAO's legs by using analytical or numerical method.
        You may need documentation of NAO's leg:
@@ -8,10 +7,13 @@
     2. use the results of inverse kinematics to control NAO's legs (in InverseKinematicsAgent.set_transforms)
        and test your inverse kinematics implementation.
 '''
+
+
 from forward_kinematics import ForwardKinematicsAgent
 from numpy.matlib import identity
 from numpy import matrix, set_printoptions, get_printoptions
 from math import pi, acos,cos, sin, atan2, pow, sqrt, atan2, asin
+import numpy
 from time import sleep
 import traceback
 
@@ -48,157 +50,88 @@ class InverseKinematicsAgent(ForwardKinematicsAgent):
         degrees = 180 * radians / pi
         return degrees
 
-    def inverse_kinematics(self, effector_name, Foot2Torso):
+    def inverse_kinematics(self, effector_name, transform):
         '''solve the inverse kinematics
-
         :param str effector_name: name of end effector, e.g. LLeg, RLeg
         :param transform: 4x4 transform matrix
         :return: list of joint angles
         '''
-        target_x = Foot2Torso[0,3]
-        target_y = Foot2Torso[1,3]
-        target_z = Foot2Torso[2,3]
-        if self.verbosity_level > 4:
-            print "\ninv_kin: Try to moove to %.2f %.2f %.2f seen from the Torso"%(target_x, target_y, target_z)
-
-        self.bodypart_sizes= {
-                                "Hip_offset_Z":     85.0,
-                                "Hip_offset_Y":     50.0,
-                                "Thigh_lenght":     100.0,#oberschenkel
-                                "Tibia_length":     102.9,#schienbein
-                                "Foot_height":      45.19}
-
-        if(effector_name.find('Leg')>0):
-            #----- Select calculationen depending on which limb is given
-            if(effector_name =='LLeg'):
-                original = get_printoptions()
-                set_printoptions(precision=2)
-                set_printoptions(suppress=True)
-                if self.verbosity_level > 3:
-                    print '\tinv_kin: Calculating inverse kinematics for left leg'
-
-                TransY = identity(4)
-                TransY[1,3]= -self.bodypart_sizes["Hip_offset_Y"]
-                TransY[2,3]= self.bodypart_sizes["Hip_offset_Z"]
-
-                Foot2Hip = TransY.dot(Foot2Torso)
-                if self.verbosity_level > 4:
-                    print"\ninv_kin: Foot2Hip=\n%s"%Foot2Hip
-
-                Foot2HipOrthogonal = self.rotate_about_x(Foot2Hip, -pi/4)
-                if self.verbosity_level > 4:
-                    print"\ninv_kin: Foot2HipOrthogonal=\n%s"%Foot2HipOrthogonal
-
-                HipOrthogonal2Foot = Foot2HipOrthogonal.I
-
-                if self.verbosity_level > 4:
-                    print "\ninv_kin: HipOrthogonal2Foot =\n%s"%HipOrthogonal2Foot
-                #Translation = HipOrthogonal2Foot.dot([[target_x], [target_y], [target_z], [0]])
-
-                #TODO kann sein, dass letzte stell im vektor ne 1 ist?
-                try:
-                    #Calculate Joints determined by the translation_vector HipO->Foot
-                    tx = HipOrthogonal2Foot[0, 3]#Translation[0]
-                    ty = HipOrthogonal2Foot[1, 3]#Translation[1]
-                    tz = HipOrthogonal2Foot[2, 3]#Translation[2]
-                    t = sqrt(tx*tx+ty*ty+tz*tz)
-                    if self.verbosity_level > 4:
-                        print "\tinv_kin: HipO2Foot=%.2f with x,y,z=(%.2f, %.2f, %.2f)"%(t, tx,ty,tz)
-
-                    u = self.bodypart_sizes["Thigh_lenght"]
-                    l = self.bodypart_sizes["Tibia_length"]
-                    if self.verbosity_level > 5:
-                        print "\tinv_kin: lower_limb= %s, upper_limb=%s"%(l,u)
-
-                    #KNEE
-                    angle_knee = pi-acos((u*u+l*l-t*t)/(2*u*l))
-                    if self.verbosity_level > 3:
-                        print "\tinv_kin: angle of LKneePitch is: %.3frad = %.2fgrad"%(angle_knee, angle_knee * 180 / pi)
-                    #FOOT-PITCH
-                    angle_foot_pitch1 = acos((l*l+t*t-u*u)/(2*l*t))
-                    if self.verbosity_level > 4:
-                        print "\tinv_kin: angle of foot_pitch1 is: %.3frad = %.2fgrad"%(angle_foot_pitch1, angle_foot_pitch1 * 180 / pi)
-
-                    angle_foot_pitch2 = atan2(tx, sqrt(ty*ty+tz*tz))
-                    if self.verbosity_level > 4:
-                        #print "\ninv_kin: sqrt(y*y+z*z)=%.3fmm x= %.2fmm"%(sqrt(ty*ty+tz*tz),tx)
-                        print "\tinv_kin: angle of foot_pitch2 is: %.3frad = %.2fgrad"%(angle_foot_pitch2, angle_foot_pitch2 * 180 / pi)
-
-                    angle_foot_pitch  = angle_foot_pitch1 + angle_foot_pitch2
-                    if self.verbosity_level > 3:
-                        print "\tinv_kin: angle of LAnklePitch is: %.3frad = %.2fgrad"%(angle_foot_pitch, angle_foot_pitch * 180 / pi)
-                    #ANKLE
-                    angle_foot_roll = atan2(ty,tz)
-                    if self.verbosity_level > 3:
-                        print "\tinv_kin: angle of LAnkleRoll is: %.3frad = %.2fgrad"%(angle_foot_roll, angle_foot_roll * 180 / pi)
-                        #print "\ninv_kin: ty=%.2fmm, tz=%.2fmm"%(ty,tz)
-
-
-                    #Calculate remaining jonts of Hip
-                    StartMatrix = identity(4) #TODO Mit welcher Matrix wird wirklich angefangen?
-                    Foot_Roll  = self.rotate_about_x(StartMatrix,   angle_foot_roll)
-                    Foot_Pitch = self.rotate_about_y(Foot_Roll,     angle_foot_pitch)
-                    Lower_Leg  = self.translate_about_z(Foot_Pitch, l)
-                    Knee       = self.rotate_about_y(Lower_Leg,     angle_knee)
-                    Thigh2Foot  = self.translate_about_z(Knee,       u)
-                    if self.verbosity_level > 4:
-                        print "\tThigh2Foot is: \n%s"%(str(Thigh2Foot))
-                    InvThigh2Foot = Thigh2Foot.I
-                    if self.verbosity_level > 4:
-                        print "\tThigh2Foot is: \n%s"%(str(InvThigh2Foot))
-                    HipOrthogonal2Thigh = InvThigh2Foot.dot(HipOrthogonal2Foot)
-                    if self.verbosity_level > 4:
-                        print "\tHipOrthogonal2Thigh is: \n%s"%(str(HipOrthogonal2Thigh))
-
-                    angle_hip_roll = asin(HipOrthogonal2Thigh[2,1]) - pi/4
-                    if self.verbosity_level > 3:
-                        print "\tinv_kin: angle of LHipRoll is: %.3frad = %.2fgrad"%(angle_hip_roll, angle_hip_roll * 180 / pi)
-
-                    angle_hip_yaw = atan2(-HipOrthogonal2Thigh[0,1], HipOrthogonal2Thigh[1,1])
-                    if self.verbosity_level > 3:
-                        print "\tinv_kin: angle of LHipYaw is: %.3frad = %.2fgrad"%(angle_hip_yaw, angle_hip_yaw * 180 / pi)
-
-                    angle_hip_pitch = atan2(-HipOrthogonal2Thigh[2,0], HipOrthogonal2Thigh[2,2])
-                    if self.verbosity_level > 3:
-                        print "\tinv_kin: angle of LHipPitch is: %.3frad = %.2fgrad"%(angle_hip_pitch, angle_hip_pitch * 180 / pi)
-
-
-                    set_printoptions(**original)
-                except:
-                    traceback.print_exc()
-
-
-
-
-
-        elif(effector_name == 'RLeg'):
-            left = False
-            if verbose:
-                print 'Calculating inverse kinematics for right leg'
-            trans_y[3,1]=-self.bodypart_sizes["Hip_offset_Y"]
+        joint_angles = {}
+        # YOUR CODE HERE
+        if   effector_name == 'LLeg':
+            joint_angles = self.inverse_LLeg(joint_angles, transform)
+        elif effector_name == 'RLeg':
+            print "Not jet implemented"
+        elif effector_name == 'LArm':
+            print "Not jet implemented"
+        elif effector_name == 'RArm':
+            print "Not jet implemented"
+        elif effector_name == 'Head':
+            print "Not jet implemented"
         else:
-            print "WARNING effector was neighter RLeg nor LLeg"
-            return
-
-            #TODO: was ist fuer links, was fuer rechts?? Winkel unten anpassen!!
-            if self.verbosity_levelget > 3:
-                print "trans_y = \n%s "%str(trans_y)
-
-        joint_angles = []
+            if selt.verbosity_level>2:
+                print "\tinv_kin: No effector with name %s found"%effector_name
         return joint_angles
 
-    def pack_keyframes():
+    def inverse_LLeg(self, joint_angles, transform):
+        if self.verbosity_level > 3:
+            print '\tinv_kin: Calculating inverse kinematics for left leg'
+            joint_angles = {}
+            '''"LHipYawPitch": -0.9 }
+            ,"LHipYawPitch": 0.707", "LHipPitch": 0.707,
+            "LHipRoll": 0.707, "LKneePitch": 0.707, "LAnklePitch": 0.707, "LAnkleRoll": 0.707}'''
+            if self.verbosity_level > 3:
+                print "\tinv_kin: added joints to joint_angles:\n%s"%joint_angles
+        return joint_angles
 
-        return 1
-
+    def inverse_RLeg(self, joint_angles, transform):
+        return True
+    def inverse_LArm(self, joint_angles, transform):
+        return True
+    def inverse_RArm(self, joint_angles, transform):
+        return True
+    def inverse_Head(self, joint_angles, transform):
+        return True
 
     def set_transforms(self, effector_name, transform):
         '''solve the inverse kinematics and control joints use the results
+
+            * Keyframe data format:
+                keyframe := (names, times, keys)
+                names := [str, ...]  # list of joint names
+                times := [[float, float, ...], [float, float, ...], ...]
+                # times is a matrix of floats: Each line corresponding to a joint, and column element to a key.
+                keys := [[float, [int, float, float], [int, float, float]], ...]
+                # keys is a list of angles in radians (won't work with set_keyframes)
+                # or an array of arrays each containing [float angle, Handle1, Handle2],
+                # where Handle is [int InterpolationType, float dTime, float dAngle] describing the handle offsets relative
+                # to the angle and time of the point. The first Bezier param describes the handle that controls the curve
+                # preceding the point, the second describes the curve following the point.
         '''
-        self.inverse_kinematics(effector_name, transform);#TODO remove
         # YOUR CODE HERE
-        self.set_keyframes(([], [], []))  # the result joint angles have to fill in
-        #self.keyframes = ([],[],[])
+        #TODO give the possibillity to change the executing time..
+        duration = 3 #execution time for the movement to an new angle
+        joint_angles = self.inverse_kinematics(effector_name, transform)
+
+        #generate keyframes
+        keyframes = [[],[],[]]
+        names = list(joint_angles.keys())
+        times = []
+        keys = []
+        for n in names:
+            times.append([0., duration])
+            #TODO check if Handles work that way..
+            keys.append([[self.perception.joint.get(n),[3,-0.33,0.],[3,0.33,0.]],[joint_angles[n], [3, -0.33,0.],[3, 0.33, 0.]]])
+        keyframes = [names, times, keys]
+        keyframes[0].append("LHipPitch")
+        keyframes[1].append([duration])
+        keyframes[2].append([
+            [-0.8, [3, -0.26667, 0.0], [3, 0.25333, 0.0]]
+        ])
+        self.set_keyframes(keyframes)
+        if self.verbosity_level > 4:
+            print "\tinv_kin: generated keyframes: \n%s"%str(self.keyframes)
+        #self.keyframes = ([], [], [])  # the result joint angles have to fill in
 
 if __name__ == '__main__':
     agent = InverseKinematicsAgent()
@@ -207,4 +140,4 @@ if __name__ == '__main__':
     T[-1, 1] = 0.05
     T[-1, 2] = 0.26
     agent.set_transforms('LLeg', T)
-    agent.run()
+    #agent.run()

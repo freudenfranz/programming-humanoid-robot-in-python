@@ -37,16 +37,17 @@ class ServerAgent(InverseKinematicsAgent):
         self.server.register_function(self.set_angle)
         self.server.register_function(self.get_posture)
         self.server.register_function(self.execute_keyframes)
+        self.server.register_function(self.get_keyframes)
         self.server.register_function(self.get_transform)
         self.server.register_function(self.set_transform)
         self.server.register_function(self.relaxe)
         self.server.register_function(self.start_server)
-        self.server.register_function(self.run)
+        #self.server.register_function(self.run)
         self.server.register_function(self.get_chains)
         self.server.register_function(self.set_verbosity)
+        self.server.register_function(self.get_verbosity)
         self.server.register_function(self.reload_agent)
         self.server.register_introspection_functions()
-
 
     def start_server(self):
         print "start serving!"
@@ -88,26 +89,30 @@ class ServerAgent(InverseKinematicsAgent):
         # YOUR CODE HERE
         return self.recognize_posture(self.perception)
 
-
-
     def execute_keyframes(self, keyframes):
         '''excute keyframes, note this function is blocking call,
         e.g. return until keyframes are executed
         '''
         # YOUR CODE HERE
         print "executing keyframes.."
-        self.set_keyframes(keyframes)
+        if keyframes:
+            self.set_keyframes(keyframes)
+        else:
+            self.set_keyframes(self.keyframes)
+        return True
+
+    def get_keyframes(self):
+        print self.keyframes
         return True
 
     def get_transform(self, name):
         '''get transform with given name
         '''
         # YOUR CODE HERE
-        trans = self.transforms[name]
         original = np.get_printoptions()
         np.set_printoptions(precision=2)
         np.set_printoptions(suppress=True)
-        print str(trans)
+        print str(self.transforms[name])
         np.set_printoptions(**original)
         x = trans[0,3]
         y = trans[1,3]
@@ -115,23 +120,21 @@ class ServerAgent(InverseKinematicsAgent):
         print "with x=%.2f, y=%.2f, z=%.2f"%(x,y,z)
         return True
 
-    def set_transform(self, effector_name, x, y, z):
+    def set_transform(self, effector_name, x, y, z, roll, pitch, yaw):
         '''solve the inverse kinematics and control joints use the result'''
         # YOUR CODE HERE
         transform = identity(4)
+
+        tarnsform = self.rotate_about_z(self.rotate_about_y(self.rotate_about_x(transform, roll), pitch), yaw)
+
         transform[0,3]= x
         transform[1,3]= y
         transform[2,3]= z
-        '''transform = matrix([[   1.,      0.,     -0.,    100.02],
-                     [   0.,      1.,      0.,     50.  ],
-                     [   0.,     -0.,      1.,   -187.89],
-                     [   0.,      0.,      0.,      1.  ]])'''
 
-        if self.verbosity_level > 3:
+        if self.verbosity_level > 4:
             print "transformation_matrix of %s is \n%s"%(effector_name, transform)
+
         self.set_transforms(effector_name, transform)
-        #if self.verbosity_level > 4:
-            #TODO print "transformation matrix of %s is now %s"%(effector_name, self.get_transform(effector_name))
         return True
 
     def get_chains(self):
@@ -145,6 +148,10 @@ class ServerAgent(InverseKinematicsAgent):
         self.verbosity_level = level
         if self.verbosity_level > 1:
             print "verbosity level set to %s"%self.verbosity_level
+        return True
+
+    def get_verbosity(self):
+        print "\tVerbosity level set to %s"%self.verbosity_level
         return True
 
     def reload_agent(self):

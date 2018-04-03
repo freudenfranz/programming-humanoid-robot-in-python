@@ -40,34 +40,34 @@ class ClientAgent(object):
         self.server_url = server_url
         self.connect_to_server()
         self.joint_names = ['HeadYaw',
-        'HeadPitch'
-        'LShoulderPitch',
-        'LShoulderRoll',
-        'LElbowYaw',
-        'LElbowRoll',
-        'LHipYawPitch',
-        'LHipRoll',
-        'LHipPitch',
-        'LKneePitch',
-        'LAnklePitch',
-        'LAnkleRoll',
-        'RHipYawPitch',
-        'RHipRoll',
-        'RHipPitch',
-        'RKneePitch',
-        'RAnklePitch',
-        'RAnkleRoll',
-        'RShoulderPitch',
-        'RShoulderRoll',
-        'RElbowYaw',
-        'RElbowRoll']
-        self.chains = {'Head': ['HeadYaw', 'HeadPitch'],
-        # YOUR CODE HERE
-        'LArm': ['LShoulderPitch', 'LShoulderRoll', 'LElbowYaw', 'LElbowRoll'],# 'LWristYaw'],
-        'LLeg': ['LHipYawPitch', 'LHipRoll', 'LHipPitch', 'LKneePitch', 'LAnklePitch', 'LAnkleRoll'],
-        'RLeg': ['RHipYawPitch', 'RHipRoll', 'RHipPitch', 'RKneePitch', 'RAnklePitch', 'RAnkleRoll'],
-        'RArm': ['RShoulderPitch', 'RShoulderRoll', 'RElbowYaw', 'RElbowRoll'],#'RWristYaw']
-        }
+                            'HeadPitch'
+                            'LShoulderPitch',
+                            'LShoulderRoll',
+                            'LElbowYaw',
+                            'LElbowRoll',
+                            'LHipYawPitch',
+                            'LHipRoll',
+                            'LHipPitch',
+                            'LKneePitch',
+                            'LAnklePitch',
+                            'LAnkleRoll',
+                            'RHipYawPitch',
+                            'RHipRoll',
+                            'RHipPitch',
+                            'RKneePitch',
+                            'RAnklePitch',
+                            'RAnkleRoll',
+                            'RShoulderPitch',
+                            'RShoulderRoll',
+                            'RElbowYaw',
+                            'RElbowRoll']
+        self.chains = { 'Head': ['HeadYaw', 'HeadPitch'],
+                        # YOUR CODE HERE
+                        'LArm': ['LShoulderPitch', 'LShoulderRoll', 'LElbowYaw', 'LElbowRoll'],# 'LWristYaw'],
+                        'LLeg': ['LHipYawPitch', 'LHipRoll', 'LHipPitch', 'LKneePitch', 'LAnklePitch', 'LAnkleRoll'],
+                        'RLeg': ['RHipYawPitch', 'RHipRoll', 'RHipPitch', 'RKneePitch', 'RAnklePitch', 'RAnkleRoll'],
+                        'RArm': ['RShoulderPitch', 'RShoulderRoll', 'RElbowYaw', 'RElbowRoll'],#'RWristYaw']
+                        }
 
     def connect_to_server(self):
         self.server = xmlrpclib.ServerProxy(self.server_url)
@@ -101,9 +101,12 @@ class ClientAgent(object):
         e.g. return until keyframes are executed
         '''
         # YOUR CODE HERE
-        print "sending command 'execute_keyframes'"
+        if self.get_verbosity_level > 5:
+            print "sending command 'execute_keyframes'"
         self.server.execute_keyframes(keyframes)
         #self.post.execute_keyframes(keyframes)
+    def get_keyframes(self):
+        self.server.get_keyframes()
 
     def get_transform(self, name):
         '''get transform with given name
@@ -111,13 +114,11 @@ class ClientAgent(object):
         # YOUR CODE HERE
         self.server.get_transform(name)
 
-
-    def set_transform(self, effector_name, x, y, z):
+    def set_transform(self, effector_name, x, y, z, roll, pitch, yaw):
         '''solve the inverse kinematics and control joints use the results
         '''
         # YOUR CODE HERE
-
-        self.server.set_transform(effector_name, x, y, z)
+        self.server.set_transform(effector_name, x, y, z, roll, pitch, yaw)
         #self.post.set_transform(effector_name, transform)
 
     def relaxe(self, stiffness):
@@ -128,6 +129,9 @@ class ClientAgent(object):
 
     def set_verbosity_level(self, level):
         self.server.set_verbosity(level)
+
+    def get_verbosity_level(self):
+        self.server.get_verbosity()
 
     def reload_agent(self):
         self.server.reload_agent()

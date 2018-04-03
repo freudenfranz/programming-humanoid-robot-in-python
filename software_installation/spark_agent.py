@@ -225,6 +225,12 @@ class SparkAgent(object):
         self.statusbar = ['[', '.', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ']']
         self.dir = 'up'
         self.agent_should_run = True
+        self.bodypart_sizes= {
+                                "Hip_offset_Z":     85.0,
+                                "Hip_offset_Y":     50.0,
+                                "Thigh_lenght":     100.0,#oberschenkel
+                                "Tibia_length":     102.9,#schienbein
+                                "Foot_height":      45.19}
 
         while player_id == 0:
             self.sense()

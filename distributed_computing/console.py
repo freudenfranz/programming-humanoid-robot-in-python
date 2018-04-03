@@ -31,6 +31,7 @@ class Console(Cmd):
             self.agent=ClientAgent()
 
         self.prompt = 'nao> '
+        self.traceback = None
         Cmd.__init__(self)
 
     def default(self, line):
@@ -65,13 +66,13 @@ class Console(Cmd):
             self.server_agent.stop_server()
             print "Server stopped.."
         except AttributeError:
-            print "Server doesn't run in this interpreter. Don't forget to shut it down!"
+            print "Server, if there is one, runs in an extern process. Don't forget to shut it down!"
 
         try:
             self.simspark.kill()
             print"Simspark stopped.."
         except AttributeError:
-            print "Simspark doesn't run in this interpreter. Don't forget to shut it down!"
+            print "Simspark, if on, doesn't run in this interpreter. Don't forget to shut it down!"
 
         return True
 
@@ -108,7 +109,7 @@ class Console(Cmd):
 
     def do_print_traceback(self, args):
         '''Prints the traceback of the last Exception'''
-        traceback.print_exc()
+        print self.traceback
         return False
 
     def do_set_verbosity(self, args):
@@ -140,36 +141,34 @@ class Console(Cmd):
     #==========Real Nao commands start here===========#
     def do_set_transform(self, args):
         '''\n Sets the transformation matrix of a effector, which will lead to its moovement.\n\n'''\
-        '''  Usage: set_transform <effector_name> <transformation_matrix>\n'''\
-        '''   If you don't use parameter it will be used 'LLeg' and\n'''\
-        '''   [[1,0,0,0][0,1,0,0][0,0,1,0][0,0.05,0.26,0]]\n\n'''\
+        '''  Usage: set_transform <effector_name> <x-position> <y-position> <z-position> <roll> <pitch> <yaw>\n'''\
+        '''  Where: (x,y,z) is the point seen from the Torso of the effector \n'''\
+        '''         (roll,pitch, yaw) are the ortientation-angles of the effector in degrees \n'''\
+        '''  If you don't any parameters, the stanandig Leg will be used:\n'''\
+        '''         LLeg, x=0mm, y=50mm, z=-333.09mm, roll=0deg, pitch=0deg, yaw=0deg\n'''\
         '''  Possible effectors are:\n'''\
         '''   'Head' 'LArm' 'LLeg' 'RLeg' 'RArm' \n'''
         args = args.split()
         if len(args)==0:
-            print "No arguments specified. Using standard values"
-            print "LLeg [[1,0,0,0],[0,1,0,50],[0,0,1,-287.9],[0,0,0,1]]"
-            #self.do_set_transform("LLeg [[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0.05,0.26,0]]")
-            #self.do_set_transform("LLeg [[1,0,0,0],[0,1,0,50],[0,0,1,-287.9],[0,0,0,1]])
+            print "No arguments specified. Using standard values:"
+            print "LLeg, x=0mm, y=50mm, z=-333.09mm, roll=0deg, pitch=0deg, yaw=0deg"
             try:
-                #print "Nao will set %s to x=%s y=%s z=%s"%('LLeg', args[0], args[1], args[2])
-
-                self.agent.set_transform('LLeg', 0, 50, -287.9)
+                self.agent.set_transform('LLeg', 0, 50, -333.09, 0, 0, 0)
             except:
                 traceback.print_exc()
-
-        elif len(args)==3:
-            dx=float(args[0])
-            dy=float(args[1])
-            dz=float(args[2])
-            print "\tValues of translation-vercotr are x=%.2f, y=%.2f, z=%.2f"%(dx, dy,dz)
-            try:
-                self.agent.set_transform('LLeg',dx,dy,dz)
-            except:
-                print "<Exeption>"
-                print("Nao thinks that 'set_tranform' function does not work properly")
-                traceback.print_exc()
-
+        #TODO Fuer richtige Eingaben implementieren
+            '''elif len(args)==3:
+                dx=float(args[0])
+                dy=float(args[1])
+                dz=float(args[2])
+                print "\tValues of translation-verctor are x=%.2f, y=%.2f, z=%.2f"%(dx, dy,dz)
+                try:
+                    self.agent.set_transform('LLeg',dx,dy,dz)
+                except:
+                    print "<Exeption>"
+                    print("Nao thinks that 'set_tranform' function does not work properly")
+                    traceback.print_exc()
+            '''
         else:
             print self.do_set_transform.__doc__
 
@@ -322,7 +321,9 @@ class Console(Cmd):
 
     def do_execute_keyframes(self, args):
         '''\n Initiates a moovement represented by keyframes.\n\n'''\
-        '''  Usage: execute_keyframes <keyframes_name> \n\n'''\
+        '''  Usage: execute_keyframes [keyframes_name] \n\n'''\
+        '''  If no keyframes are specified, the precalculated and \n'''\
+        '''      stored with 'set_keyframes()' ones are taken\n'''\
         '''  Known keyframes stored in keyframe folder are:\n'''\
         '''    leftBackToStand\n'''\
         '''    wipe_forehead\n'''\
@@ -355,16 +356,41 @@ class Console(Cmd):
                 self.agent.relaxe(1)
                 pass
             else:
-                print "Keyframes-name not found"
-                print " use 'help execute_keyframes' for more information"
+                if self.do_get_verbosity > 2:
+                    print "Keyframes-name not known"
+                    print " use 'help execute_keyframes' for more information"
+                #TODO just execute precalculated keyframes??
+
             try:
-                print(self.agent.execute_keyframes(action))
+                self.agent.execute_keyframes(action)
             except:
                 print"Nao thinks, function 'execute_keyframes' doesn't work properly"
                 traceback.print_exc()
+        if len(args) == 0:
+            try:
+                print"No keyframes specified. Takeing the prestored ones!"
+                self.agent.execute_keyframes(action)
+
+            except:
+                self.traceback = traceback.format_exc()
+                print"Error!"
+                print"Did you prestore any keyframes?"
+                print " use 'help execute_keyframes' for more information"
+                print"show last traceback witch 'print_traceback'"
         else:
             print self.do_execute_keyframes.__doc__
 
+        return False
+
+    def do_get_keyframes(self, args):
+        '''prints the servers actual keyframes'''
+        try:
+            self.agent.get_keyframes()
+        except:
+            self.traceback = traceback.format_exc()
+            print"Error: Do you have a serveragent running?"
+            print"use print_traceback for more information"
+            print self.do_get_keyframes.__doc__
         return False
 
     def do_list_effector_chains(self, args):
