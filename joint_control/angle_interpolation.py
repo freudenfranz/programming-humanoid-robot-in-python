@@ -75,7 +75,10 @@ class AngleInterpolationAgent(PIDAgent):
                 #set t_left for joint 'name'
                 a_0 = self.perception.joint[name] #angle at time 0 (=now)
                 dt_0 = k1[1][1] #take same acceleration for first Timestampe then second ones has
-                ipol_type = self.keyframes[2][index][0][1][0] #that is usually '3'
+
+                print "k1 = %s"%k1
+                #ipol_type = self.keyframes[2][index][0][1][0] #that is usually '3'
+                ipol_type = k1[1][0] #that is usually '3'
                 k0 = [ a_0, [ipol_type, dt_0, 0.], [ipol_type, -dt_0, 0.] ]
                 self.t_left[name] = [0, k0]
                 #if self.keyframes[1][index][0]: #else we removed it allready to t_right, so don't copy again

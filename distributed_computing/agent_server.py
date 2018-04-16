@@ -114,10 +114,12 @@ class ServerAgent(InverseKinematicsAgent):
         np.set_printoptions(suppress=True)
         print str(self.transforms[name])
         np.set_printoptions(**original)
-        x = trans[0,3]
-        y = trans[1,3]
-        z = trans[2,3]
+        '''
+        x = matrix.trans[0,3]
+        y = matrix.trans[1,3]
+        z = matrix.trans[2,3]
         print "with x=%.2f, y=%.2f, z=%.2f"%(x,y,z)
+        '''
         return True
 
     def set_transform(self, effector_name, x, y, z, roll, pitch, yaw):
