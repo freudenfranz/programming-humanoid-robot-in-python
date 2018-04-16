@@ -119,18 +119,18 @@ class InverseKinematicsAgent(ForwardKinematicsAgent):
                 print('argument=%.3f')%(argument)
 
             #LKneePitch
-            angle_knee_p = pi-acos((u*u+l*l-t*t)/(2*u*l))
-            angle_knee_n = -angle_knee_p
+            theta_4 = pi-acos((u*u+l*l-t*t)/(2*u*l))
+            #TODO theta_4_n = -theta_4_p
             if self.verbosity_level > 3:
-                print "\tinv_kin: angle of LKneePitch is: +-%.3frad = %.2fgrad"%(angle_knee_p, angle_knee_p * 180 / pi)
+                print "\tinv_kin: angle of LKneePitch is: +-%.3frad = %.2fgrad"%(theta_4, theta_4 * 180 / pi)
 
             #LAnkleRoll
-            angle_ankle_roll = atan(T_dash[0, 2] / T_dash[1, 2])
+            theta_6 = atan(T_dash[0, 2] / T_dash[1, 2])
             if self.verbosity_level > 3:
-                print "\tinv_kin: angle of LAnkleRoll is: +-%.3frad = %.2fgrad"%(angle_ankle_roll, angle_ankle_roll * 180 / pi)
+                print "\tinv_kin: angle of LAnkleRoll is: +-%.3frad = %.2fgrad"%(theta_6, theta_6 * 180 / pi)
                 print "WARNUNG. NUR Wenn bbla ungleich 0!!"
 
-            T_5_6 = self.local_trans("LAnkleRoll", angle_ankle_roll)
+            T_5_6 = self.local_trans("LAnkleRoll", theta_6)
             if self.verbosity_level > 3:
                 print '\tinv_kin: T_5->6 = \n%s'%str(T_5_6)
 
@@ -139,10 +139,56 @@ class InverseKinematicsAgent(ForwardKinematicsAgent):
                 print '\tinv_kin: T~\' = \n%s'%str(T_rot_removed)
 
             T_tilde_dash = T_tilde.dot(T_rot_removed.I)
+            if self.verbosity_level > 3:
+                print '\tinv_kin: T~\' = \n%s'%str(T_tilde_dash)
+
+            T_dash_2 = T_tilde_dash.I
+            if self.verbosity_level >   3:
+                print '\tinv_kin: T\'\' = \n%s'%str(T_dash_2)
+
+            #LAnklePitch
+            #u = self.bodypart_sizes["Thigh_lenght"]
+            #l = self.bodypart_sizes["Tibia_length"]
+            #l1 = u = ThighLength and l2 =l= TibiaLength.
+            quotient =  T_dash_2[1, 3] * (l+u*cos(theta_4))+ u * T_dash_2[0, 3] * sin(theta_4)
+            dividend = l**2*sin(theta_4)**2+(l+u*cos(theta_4))**2
+            if self.verbosity_level > 3:
+                print 'divident = %s'%quotient
+                print 'divisor = %s'%dividend
+            theta_5 = asin(-(quotient/dividend))
+            if self.verbosity_level > 3:
+                print "\tinv_kin: angle of LAnklePitch is: +-%.3frad = %.2fgrad"%(theta_5, theta_5 * 180 / pi)
+
+            T_3_4 = self.local_trans("LKneePitch", theta_4)
+            T_4_5 = self.local_trans("LAnklePitch", theta_5)
+            T_dash_3 = T_tilde_dash.dot((T_3_4.dot(T_4_5)).T)
+            if self.verbosity_level > 3:
+                print '\tinv_kin: T_3->4 = \n%s'%str(T_3_4)
+                print '\tinv_kin: T_4->5 = \n%s'%str(T_4_5)
+                print '\tinv_kin: T\'\'\' = \n%s'%str(T_dash_3)
+                print '\tinv_kin: T\'\'\' translation block must be zero'
+
+            theta_2_hut = acos(T_dash_3[1, 2])
+            theta_2 = theta_2_hut - (pi/4)
+            theta_3 = asin((T_dash_3[1,1])/(sin(theta_2+pi/4)))
+            theta_1_hut = asin((T_dash_3[0,3])/(sin(theta_2+pi/4)))
+            theta_1 = theta_1_hut + (pi/2)
+            if self.verbosity_level > 3:
+                print "\tinv_kin: Theta_2_hut is: +-%.3frad = %.2fgrad"%(theta_2_hut, theta_2_hut * 180 / pi)
+                print "\tinv_kin: angle of Theta_2 is: +-%.3frad = %.2fgrad"%(theta_2, theta_2 * 180 / pi)
+                print "\tinv_kin: angle of Theta_3 is: +-%.3frad = %.2fgrad"%(theta_3, theta_3 * 180 / pi)
+                print "\tinv_kin: angle of Theta_1_hut is: +-%.3frad = %.2fgrad"%(theta_1_hut, theta_1_hut * 180 / pi)
+                print "\tinv_kin: angle of Theta_1 is: +-%.3frad = %.2fgrad"%(theta_1, theta_1 * 180 / pi)
+
+
 
             #TODO falschen wert Filtern
-            joint_angles['LKneePitch'] = angle_knee_p
-
+            joint_angles['LHipYawPitch']= theta_1
+            joint_angles['LHipRoll']    = theta_2
+            joint_angles['LHipPitch']   = theta_3
+            joint_angles['LKneePitch']  = theta_4
+            joint_angles['LAnklePitch'] = theta_5
+            joint_angles['LAnkleRoll']  = theta_6
             if self.verbosity_level > 3:
                 print "\tinv_kin: added joints to joint_angles:\n%s"%joint_angles
 
@@ -180,7 +226,7 @@ class InverseKinematicsAgent(ForwardKinematicsAgent):
         duration = 3 #execution time for the movement to an new angle
         joint_angles = self.inverse_kinematics(effector_name, transform)
         print joint_angles
-        '''
+
         #generate keyframes
         keyframes = [[],[],[]]
         names = list(joint_angles.keys())
@@ -202,7 +248,7 @@ class InverseKinematicsAgent(ForwardKinematicsAgent):
             print "\tinv_kin: generated keyframes: \n%s"%str(keyframes)
         self.set_keyframes(keyframes)
         #self.keyframes = ([], [], [])  # the result joint angles have to fill in
-        '''
+
 if __name__ == '__main__':
     agent = InverseKinematicsAgent()
     # test inverse kinematics
