@@ -85,7 +85,8 @@ class InverseKinematicsAgent(ForwardKinematicsAgent):
                 ,"LHipYawPitch": 0.707", "LHipPitch": 0.707,
                 "LHipRoll": 0.707, "LKneePitch": 0.707, "LAnklePitch": 0.707, "LAnkleRoll": 0.707}'''
             T = matrix(transform) #Chain from Torso to LFoot
-
+            if self.verbosity_level > 3:
+                print '\tinv_kin: T = \n%s'%str(T)
             A_Base = identity(4) #Left-ended translation-matrix of chain (TorsoToHip)
             A_Base[1,3]= self.bodypart_sizes["Hip_offset_Y"]
             A_Base[2,3]= -self.bodypart_sizes["Hip_offset_Z"]
@@ -100,7 +101,9 @@ class InverseKinematicsAgent(ForwardKinematicsAgent):
                 print '\tinv_kin: A_End = \n%s'%str(A_End)
 
             T_hut = A_Base.dot(T.dot(A_End))#Hip2Ankle (=202.9)
-            T_tilde = self.rotate_about_x(T_hut, pi/4)#Hip2AnkleOrtho (=143,47)
+            ident = identity(4)
+            T_tilde = self.rotate_about_x(ident, pi/4)#Hip2AnkleOrtho (=143,47)
+            T_tilde = T_tilde.dot(T_hut)
             T_dash  = T_tilde.I #AnkleToHipOrthogonal
             if self.verbosity_level > 3:
                 print '\tinv_kin: Hip2Ankle=T^ = \n%s'%str(T_hut)
@@ -134,6 +137,7 @@ class InverseKinematicsAgent(ForwardKinematicsAgent):
             if self.verbosity_level > 3:
                 print '\tinv_kin: T_5->6 = \n%s'%str(T_5_6)
 
+
             T_rot_removed = self.rotate_about_y(self.rotate_about_z(T_5_6, pi), (-pi/2))
             if self.verbosity_level > 3:
                 print '\tinv_kin: T~\' = \n%s'%str(T_rot_removed)
@@ -141,8 +145,9 @@ class InverseKinematicsAgent(ForwardKinematicsAgent):
             T_tilde_dash = T_tilde.dot(T_rot_removed.I)
             if self.verbosity_level > 3:
                 print '\tinv_kin: T~\' = \n%s'%str(T_tilde_dash)
-
-            T_dash_2 = T_tilde_dash.I
+                
+            T_dash_2 = ((T_dash.I).dot(T_rot_removed.I)).I
+            #T_dash_2 = T_tilde_dash.I
             if self.verbosity_level >   3:
                 print '\tinv_kin: T\'\' = \n%s'%str(T_dash_2)
 
